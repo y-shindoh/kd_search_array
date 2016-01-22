@@ -6,10 +6,8 @@
  */
 
 #include <cstdio>
-#include <cstring>
 #include <array>
 #include <vector>
-#include <algorithm>
 #include "kd_search_array.hpp"
 
 #define	M	6

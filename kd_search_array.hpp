@@ -22,25 +22,25 @@ namespace ys
 	{
 	private:
 
-		size_t* array_;	///< kD木の本体
-		size_t length_;	///< 配列 @a array_ の容量
+		size_t* tree_;	///< kD木の本体
+		size_t length_;	///< 配列 @a tree_ の容量
 
 		/**
 		 * 選択処理
 		 * @param[in,out]	buffer	配列 @a values のインデックス
 		 * @param[in]	values	データ
-		 * @param[in]	target	選択したい位置
+		 * @param[in]	target	選択したい @a buffer の位置
 		 * @param[in]	from	配列 @a buffer の処理領域の始点
 		 * @param[in]	to	配列 @a buffer の処理領域の終点
 		 * @param[in]	depth	kD木の深さを @a N で割った値
 		 */
 		static void
-		Selection(size_t* buffer,
-				  const std::array<TYPE, N>* values,
-				  size_t target,
-				  size_t from,
-				  size_t to,
-				  size_t depth)
+		Select(size_t* buffer,
+			   const std::array<TYPE, N>* values,
+			   size_t target,
+			   size_t from,
+			   size_t to,
+			   size_t depth)
 			{
 				assert(buffer);
 				assert(values);
@@ -63,16 +63,15 @@ namespace ys
 				std::swap(buffer[from], buffer[j-1]);
 				if (target == j - 1) return;
 
-				if (from + 2 < j) Selection(buffer, values, target, from, j - 2, depth);
-				if (j < to) Selection(buffer, values, target, j, to, depth);
+				if (from + 2 < j) Select(buffer, values, target, from, j - 2, depth);
+				if (j < to) Select(buffer, values, target, j, to, depth);
 			}
 
 		/**
 		 * kD木の構築
-		 * @param[out]	array	kD木
 		 * @param[in,out]	buffer	配列 @a values のインデックス (作業領域)
 		 * @param[in]	values	データ
-		 * @param[in]	target	kD木の中で確定させるインデックス
+		 * @param[in]	index	kD木の中で確定させるインデックス
 		 * @param[in]	from	配列 @a buffer の処理領域の始点
 		 * @param[in]	to	配列 @a buffer の処理領域の終点
 		 * @param[in]	depth	kD木の深さ
@@ -80,22 +79,22 @@ namespace ys
 		void
 		build(size_t* buffer,
 			  const std::array<TYPE, N>* values,
-			  size_t target,
+			  size_t index,
 			  size_t from,
 			  size_t to,
 			  size_t depth)
 			{
-				assert(array_);
+				assert(tree_);
 				assert(buffer);
 				assert(values);
 				assert(from <= to);
 
 				size_t k = (from + to + 1) / 2;
-				if (from < to) Selection(buffer, values, k, from, to, depth % N);
-				array_[target] = buffer[k];
+				if (from < to) Select(buffer, values, k, from, to, depth % N);
+				tree_[index] = buffer[k];
 
-				if (from < k) build(buffer, values, target * 2 + 1, from, k - 1, depth + 1);
-				if (k < to) build(buffer, values, target * 2 + 2, k + 1, to, depth + 1);
+				if (from < k) build(buffer, values, index * 2 + 1, from, k - 1, depth + 1);
+				if (k < to) build(buffer, values, index * 2 + 2, k + 1, to, depth + 1);
 			}
 
 	public:
@@ -104,7 +103,7 @@ namespace ys
 		 * コンストラクタ
 		 */
 		KDSearchArray()
-			: array_(0), length_(0)
+			: tree_(0), length_(0)
 			{
 				;
 			}
@@ -126,26 +125,26 @@ namespace ys
 				size_t l(1);
 				while (l < length) l *= 2;
 
-				if (array_) {
-					delete [] array_;
-					array_ = 0;
+				if (tree_) {
+					delete [] tree_;
+					tree_ = 0;
 				}
 
 				try {
-					array_ = new size_t[l];
+					tree_ = new size_t[l];
 					buffer = new size_t[length];
 				}
 				catch (...) {
 					;
 				}
 
-				if (!array_ || !buffer) {
-					if (array_) delete [] array_;
+				if (!tree_ || !buffer) {
+					if (tree_) delete [] tree_;
 					if (buffer) delete [] buffer;
 					return false;
 				}
 
-				std::fill(array_, array_ + l, ~(size_t)0);
+				std::fill(tree_, tree_ + l, ~(size_t)0);
 				for (size_t i(0); i < length; ++i) buffer[i] = i;
 				build(buffer, values, 0, 0, length - 1, 0);
 				length_ = l;
@@ -159,7 +158,7 @@ namespace ys
 		 * @param[in]	values	データ
 		 * @param[in]	from	探索範囲の始点
 		 * @param[in]	to	探索範囲の終点
-		 * @param[out]	indexes	探索範囲内にある @a values 内の点のインデックス
+		 * @param[out]	points	探索範囲内にある @a values 内の点のインデックス
 		 * @param[in]	index	kD木内での探索対象のインデックス
 		 * @param[in]	depth	kD木内での探索対象の深さ
 		 * @note	通常利用では、引数 @a index, @a depth はデフォルト値で良い。
@@ -168,15 +167,15 @@ namespace ys
 		find(const std::array<TYPE, N>* values,
 			 const std::array<TYPE, N>& from,
 			 const std::array<TYPE, N>& to,
-			 std::vector<size_t>& indexes,
+			 std::vector<size_t>& points,
 			 size_t index = 0,
 			 size_t depth = 0)
 			{
-				assert(array_);
+				assert(tree_);
 				assert(0 < length_);
 				assert(values);
 
-				size_t x = array_[index];
+				size_t x = tree_[index];
 				bool f(true);
 
 				for (size_t i(0); i < N; ++i) {
@@ -193,17 +192,17 @@ namespace ys
 					}
 				}
 
-				if (f) indexes.push_back(x);
+				if (f) points.push_back(x);
 
 				size_t k = index * 2 + 1;
 				size_t d = depth % N;
-				if (k < length_ && array_[k] < ~(size_t)0 && from[d] <= values[x][d]) {
-					find(values, from, to, indexes, k, depth + 1);
+				if (k < length_ && tree_[k] < ~(size_t)0 && from[d] <= values[x][d]) {
+					find(values, from, to, points, k, depth + 1);
 				}
 
 				++k;
-				if (k < length_ && array_[k] < ~(size_t)0 && values[x][d] <= to[d]) {
-					find(values, from, to, indexes, k, depth + 1);
+				if (k < length_ && tree_[k] < ~(size_t)0 && values[x][d] <= to[d]) {
+					find(values, from, to, points, k, depth + 1);
 				}
 			}
 	};
