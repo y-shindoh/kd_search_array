@@ -109,6 +109,26 @@ namespace ys
 			}
 
 		/**
+		 * コピー・コンストラクタ (使用禁止)
+		 */
+		KDSearchArray(const KDSearchArray<TYPE, N>&) = delete;
+
+		/**
+		 * 代入演算子 (使用禁止)
+		 */
+		KDSearchArray&
+		operator =(const KDSearchArray<TYPE, N>&) = delete;
+
+		/**
+		 * デストラクタ
+		 */
+		virtual
+		~KDSearchArray()
+			{
+				if (tree_) delete [] tree_;
+			}
+
+		/**
 		 * kD木の準備
 		 * @param[in]	values	データ
 		 * @param[in]	length	配列 @a values の要素数
