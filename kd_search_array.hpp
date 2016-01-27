@@ -61,7 +61,7 @@ namespace ys
 					++j;
 				}
 
-				std::swap(buffer[from], buffer[j-1]);
+				if (from == j - 1) std::swap(buffer[from], buffer[j-1]);
 				if (target == j - 1) return;
 
 				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth);
@@ -195,6 +195,7 @@ namespace ys
 				assert(tree_);
 				assert(0 < length_);
 				assert(values);
+				assert(tree_[index] < ~(size_t)0);
 
 				size_t x = tree_[index];
 				bool f(true);
