@@ -44,7 +44,8 @@ namespace ys
 			{
 				assert(buffer);
 				assert(values);
-				assert(from <= to);
+				assert(from <= target);
+				assert(target <= to);
 				assert(depth < N);
 
 				if (from == to) return;
@@ -63,8 +64,8 @@ namespace ys
 				std::swap(buffer[from], buffer[j-1]);
 				if (target == j - 1) return;
 
-				if (from + 2 < j) Select(buffer, values, target, from, j - 2, depth);
-				if (j < to) Select(buffer, values, target, j, to, depth);
+				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth);
+				if (j < target + 1) Select(buffer, values, target, j, to, depth);
 			}
 
 		/**
