@@ -172,9 +172,6 @@ namespace ys
 				length_ = l;
 				delete [] buffer;
 
-//				for (int i(0); i < length; ++i) std::printf("%lu ", tree_[i]);
-//				std::printf("\n");
-
 				return true;
 			}
 
@@ -205,17 +202,9 @@ namespace ys
 				bool f(true);
 
 				for (size_t i(0); i < N; ++i) {
-					if (from[i] <= values[x][i]) continue;
+					if (from[i] <= values[x][i] && values[x][i] <= to[i]) continue;
 					f = false;
 					break;
-				}
-
-				if (f) {
-					for (size_t i(0); i < N; ++i) {
-						if (values[x][i] <= to[i]) continue;
-						f = false;
-						break;
-					}
 				}
 
 				if (f) points.push_back(x);
