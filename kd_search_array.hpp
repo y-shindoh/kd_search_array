@@ -10,6 +10,7 @@
 
 #include <cassert>
 #include <array>
+#include <vector>
 #include <algorithm>
 
 namespace ys
