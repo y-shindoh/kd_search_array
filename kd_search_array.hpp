@@ -62,7 +62,7 @@ namespace ys
 					++j;
 				}
 
-				if (from == j - 1) std::swap(buffer[from], buffer[j-1]);
+				if (from != j - 1) std::swap(buffer[from], buffer[j-1]);
 				if (target == j - 1) return;
 
 				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth);
@@ -91,7 +91,7 @@ namespace ys
 				assert(values);
 				assert(from <= to);
 
-				size_t k = (from + to + 1) / 2;
+				size_t k = (from + to) / 2;
 				if (from < to) Select(buffer, values, k, from, to, depth % N);
 				tree_[index] = buffer[k];
 
@@ -171,6 +171,9 @@ namespace ys
 				build(buffer, values, 0, 0, length - 1, 0);
 				length_ = l;
 				delete [] buffer;
+
+//				for (int i(0); i < length; ++i) std::printf("%lu ", tree_[i]);
+//				std::printf("\n");
 
 				return true;
 			}
