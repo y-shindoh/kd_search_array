@@ -12,6 +12,8 @@
 #error	This library requires a C++11 compiler.
 #endif
 
+//#define	__KD_SEARCH_ARRAY_USE_SELECTION__	1
+
 #include <cassert>
 #include <array>
 #include <vector>
@@ -29,6 +31,51 @@ namespace ys
 
 		size_t* tree_;	///< kD木の本体
 		size_t length_;	///< 配列 @a tree_ の容量
+
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+		/**
+		 * 選択処理
+		 * @param[in,out]	buffer	配列 @a values のインデックス
+		 * @param[in]	values	データ
+		 * @param[in]	target	選択したい @a buffer の位置
+		 * @param[in]	from	配列 @a buffer の処理領域の始点
+		 * @param[in]	to	配列 @a buffer の処理領域の終点
+		 * @param[in]	depth	kD木の深さを @a N で割った値
+		 */
+		static void
+		Select(size_t* buffer,
+			   const std::array<TYPE, N>* values,
+			   size_t target,
+			   size_t from,
+			   size_t to,
+			   size_t depth)
+			{
+				assert(buffer);
+				assert(values);
+				assert(from <= target);
+				assert(target <= to);
+				assert(depth < N);
+
+				if (from == to) return;
+
+				size_t k = (from + to) / 2;	///< @todo 乱択処理にすること。
+				size_t j(from+1);
+
+				std::swap(buffer[from], buffer[k]);
+
+				for (size_t i(from+1); i <= to; ++i) {
+					if (values[buffer[from]][depth] <= values[buffer[i]][depth]) continue;
+					std::swap(buffer[j], buffer[i]);
+					++j;
+				}
+
+				if (from != j - 1) std::swap(buffer[from], buffer[j-1]);
+				if (target == j - 1) return;
+
+				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth);
+				if (j < target + 1) Select(buffer, values, target, j, to, depth);
+			}
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 
 		/**
 		 * kD木の構築
@@ -56,9 +103,13 @@ namespace ys
 
 				size_t k = (from + to) / 2;
 				if (from < to) {
+#ifndef	__KD_SEARCH_ARRAY_USE_SELECTION__
 					size_t d = depth % N;
 					std::stable_sort(buffer + from, buffer + to + 1,
 									 [values, d] (size_t l, size_t r) { return values[l][d] <= values[r][d]; });
+#else	// !__KD_SEARCH_ARRAY_USE_SELECTION__
+					Select(buffer, values, k, from, to, depth % N);
+#endif	// !__KD_SEARCH_ARRAY_USE_SELECTION__
 				}
 				tree_[index] = buffer[k];
 
