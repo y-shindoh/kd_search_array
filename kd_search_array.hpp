@@ -8,6 +8,10 @@
 #ifndef	__KD_SEARCH_ARRAY_HPP__
 #define	__KD_SEARCH_ARRAY_HPP__	"kd_search_array.hpp"
 
+#if	!defined(__cplusplus) || __cplusplus < 201103L
+#error	This library requires a C++11 compiler.
+#endif
+
 #include <cassert>
 #include <array>
 #include <vector>
@@ -34,6 +38,8 @@ namespace ys
 		 * @param[in]	from	配列 @a buffer の処理領域の始点
 		 * @param[in]	to	配列 @a buffer の処理領域の終点
 		 * @param[in]	depth	kD木の深さ
+		 * @note	以前は選択アルゴリズムを内部的に使っていたが、
+					最悪計算時間が好ましくなかったため、std::stable_sort に置き換えた。
 		 */
 		void
 		build(size_t* buffer,
@@ -102,7 +108,7 @@ namespace ys
 			{
 				assert(values);
 				assert(0 < length);
-				assert(length < ~(size_t)0);
+				assert(length < ~0LU);
 
 				size_t* buffer(0);
 				size_t l(1);
@@ -127,7 +133,7 @@ namespace ys
 					return false;
 				}
 
-				std::fill(tree_, tree_ + l, ~(size_t)0);
+				std::fill(tree_, tree_ + l, ~0LU);
 				for (size_t i(0); i < length; ++i) buffer[i] = i;
 				build(buffer, values, 0, 0, length - 1, 0);
 				length_ = l;
@@ -157,27 +163,25 @@ namespace ys
 				assert(tree_);
 				assert(0 < length_);
 				assert(values);
-				assert(tree_[index] < ~(size_t)0);
+				assert(tree_[index] < ~0LU);
 
 				size_t x = tree_[index];
 				bool f(true);
 
-				for (size_t i(0); i < N; ++i) {
-					if (from[i] <= values[x][i] && values[x][i] <= to[i]) continue;
-					f = false;
-					break;
+				for (size_t i(0); i < N && f; ++i) {
+					f = (from[i] <= values[x][i]) & (values[x][i] <= to[i]);
 				}
 
 				if (f) points.push_back(x);
 
 				size_t k = index * 2 + 1;
 				size_t d = depth % N;
-				if (k < length_ && tree_[k] < ~(size_t)0 && from[d] <= values[x][d]) {
+				if (k < length_ && tree_[k] < ~0LU && from[d] <= values[x][d]) {
 					find(values, from, to, points, k, depth + 1);
 				}
 
 				++k;
-				if (k < length_ && tree_[k] < ~(size_t)0 && values[x][d] <= to[d]) {
+				if (k < length_ && tree_[k] < ~0LU && values[x][d] <= to[d]) {
 					find(values, from, to, points, k, depth + 1);
 				}
 			}
