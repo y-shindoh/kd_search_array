@@ -19,6 +19,10 @@
 #include <vector>
 #include <algorithm>
 
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+#include <random>
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
+
 namespace ys
 {
 	/**
@@ -29,8 +33,11 @@ namespace ys
 	{
 	private:
 
-		size_t* tree_;	///< kD木の本体
-		size_t length_;	///< 配列 @a tree_ の容量
+		size_t* tree_;		///< kD木の本体
+		size_t length_;		///< 配列 @a tree_ の容量
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+		std::mt19937* mt_;	///< メルセンヌ・ツイスタ (32bit版)
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 
 #ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
 		/**
@@ -48,7 +55,8 @@ namespace ys
 			   size_t target,
 			   size_t from,
 			   size_t to,
-			   size_t depth)
+			   size_t depth,
+			   std::mt19937* mt)
 			{
 				assert(buffer);
 				assert(values);
@@ -58,7 +66,7 @@ namespace ys
 
 				if (from == to) return;
 
-				size_t k = (from + to) / 2;	///< @todo 乱択処理にすること。
+				size_t k = from + (*mt)() % (to + 1 - from);
 				size_t j(from+1);
 
 				std::swap(buffer[from], buffer[k]);
@@ -72,8 +80,8 @@ namespace ys
 				if (from != j - 1) std::swap(buffer[from], buffer[j-1]);
 				if (target == j - 1) return;
 
-				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth);
-				if (j < target + 1) Select(buffer, values, target, j, to, depth);
+				if (target + 1 < j) Select(buffer, values, target, from, j - 2, depth, mt);
+				if (j < target + 1) Select(buffer, values, target, j, to, depth, mt);
 			}
 #endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 
@@ -108,7 +116,7 @@ namespace ys
 					std::stable_sort(buffer + from, buffer + to + 1,
 									 [values, d] (size_t l, size_t r) { return values[l][d] <= values[r][d]; });
 #else	// !__KD_SEARCH_ARRAY_USE_SELECTION__
-					Select(buffer, values, k, from, to, depth % N);
+					Select(buffer, values, k, from, to, depth % N, mt_);
 #endif	// !__KD_SEARCH_ARRAY_USE_SELECTION__
 				}
 				tree_[index] = buffer[k];
@@ -124,8 +132,14 @@ namespace ys
 		 */
 		KDSearchArray()
 			: tree_(0), length_(0)
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+			, mt_(0)
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 			{
-				;
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+				std::random_device rd;
+				mt_ = new std::mt19937(rd());
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 			}
 
 		/**
@@ -146,6 +160,9 @@ namespace ys
 		~KDSearchArray()
 			{
 				if (tree_) delete [] tree_;
+#ifdef	__KD_SEARCH_ARRAY_USE_SELECTION__
+				if (mt_) delete mt_;
+#endif	// __KD_SEARCH_ARRAY_USE_SELECTION__
 			}
 
 		/**
